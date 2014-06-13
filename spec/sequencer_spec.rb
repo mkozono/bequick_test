@@ -6,7 +6,7 @@ describe Sequencer do
     before do
       FakeFS.activate!
       File.open("example_dictionary.txt", 'w') do |file|
-        file.write("arrows\ncarrots\ngive\nme\n")
+        file.write("arrows\ncarrots\ngive\nme\nz's\n")
       end
       @sequencer = Sequencer.new("example_dictionary.txt", "sequences", "words")
       @sequencer.process_four_letter_sequences
