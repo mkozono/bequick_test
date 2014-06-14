@@ -38,16 +38,6 @@ describe Sequencer do
     end
   end
 
-  describe "#get_sequences" do
-    subject { @sequencer.get_sequences("example_dictionary.txt", 4) }
-    it "returns sequences as the first element" do
-      expect(subject[0]).to match_array ["carr", "give", "rots", "rows", "rrot", "rrow"]
-    end
-    it "returns words as the second element" do
-      expect(subject[1]).to match_array ["carrots", "give", "carrots", "arrows", "carrots", "arrows"]
-    end
-  end
-
   describe "#parse_dictionary_file" do
     subject { @sequencer.parse_dictionary_file("example_dictionary.txt", 4) }
     it "returns a hash whose keys are sequences and values are words" do
@@ -75,6 +65,21 @@ describe Sequencer do
     end
   end
 
-  describe "#output_sequences" do
+  describe "#get_sequences_and_words" do
+    subject { @sequencer.get_sequences_and_words(sequence_hash) }
+    let(:sequence_hash) { {"rows" => "arrows", "carr" => "carrots", "rrot" => "carrots"} }
+    it "returns sequences as the first element, sorted" do
+      expect(subject[0]).to match_array ["carr", "rows", "rrot"]
+    end
+    it "returns words as the second element, in corresponding order to the sequences" do
+      expect(subject[1]).to match_array ["carrots", "arrows", "carrots"]
+    end
+  end
+
+  describe "#write_array_to_file" do
+    it "writes each element as a line in the file" do
+      @sequencer.write_array_to_file(["abc", "123"], "filename")
+      expect(File.read("filename")).to eq "abc\n123\n"
+    end
   end
 end

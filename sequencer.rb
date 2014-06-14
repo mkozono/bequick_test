@@ -7,16 +7,10 @@ class Sequencer
   end
 
   def process_four_letter_sequences
-    sequences, words = get_sequences(@dictionary_filename, 4)
+    sequence_hash = parse_dictionary_file(@dictionary_filename, 4)
+    sequences, words = get_sequences_and_words(sequence_hash)
     write_array_to_file(sequences, @sequence_filename)
     write_array_to_file(words, @words_filename)
-  end
-
-  def get_sequences(dictionary_filename, sequence_length)
-    sequence_hash = parse_dictionary_file(dictionary_filename, sequence_length)
-    sequences = sequence_hash.keys
-    words = sequence_hash.values
-    [sequences, words]
   end
 
   def parse_dictionary_file(dictionary_filename, sequence_length)
@@ -26,7 +20,6 @@ class Sequencer
       file.each_line do |line|
         line = line.chomp
         sequences = parse_line(line, sequence_length)
-        raise "Two identical sequences in the same line!" if sequences.size != sequences.uniq.size
         sequences.each do |sequence|
           dupes << sequence if sequence_hash.has_key?(sequence)
           sequence_hash[sequence] = line
@@ -42,6 +35,14 @@ class Sequencer
     (0..num_sequences).map do |index|
       line[index, sequence_length]
     end
+  end
+
+  def get_sequences_and_words(sequence_hash)
+    sequences = sequence_hash.keys.sort
+    words = sequences.map do |sequence|
+      sequence_hash[sequence]
+    end
+    [sequences, words]
   end
 
   def write_array_to_file(array_object, filename)
