@@ -40,16 +40,18 @@ describe Sequencer do
 
   describe "#parse_dictionary_file" do
     subject { @sequencer.parse_dictionary_file("example_dictionary.txt", 4) }
-    it "returns a hash whose keys are sequences and values are words" do
-      expected_hash = {
-        "carr" => "carrots",
-        "give" => "give",
-        "rots" => "carrots",
-        "rows" => "arrows",
-        "rrot" => "carrots",
-        "rrow" => "arrows"
-      }
-      expect(subject).to eq expected_hash
+    it "returns an array of SequenceWithWord objects" do
+      expected_array = [
+        Sequencer::SequenceWithWord.new("arro", "arrows"),
+        Sequencer::SequenceWithWord.new("arro", "carrots"),
+        Sequencer::SequenceWithWord.new("carr", "carrots"),
+        Sequencer::SequenceWithWord.new("give", "give"),
+        Sequencer::SequenceWithWord.new("rots", "carrots"),
+        Sequencer::SequenceWithWord.new("rows", "arrows"),
+        Sequencer::SequenceWithWord.new("rrot", "carrots"),
+        Sequencer::SequenceWithWord.new("rrow", "arrows")
+      ]
+      expect(subject).to match_array expected_array
     end
   end
 
@@ -57,7 +59,13 @@ describe Sequencer do
     subject { @sequencer.parse_line(line, 4) }
     context "when the line is at least as long as sequence_length" do
       let(:line) { "coffee" }
-      it { should eq ["coff", "offe", "ffee"] }
+      it "returns an array of SequenceWithWord objects" do
+        expect(subject).to eq [
+          Sequencer::SequenceWithWord.new("coff","coffee"), 
+          Sequencer::SequenceWithWord.new("offe","coffee"), 
+          Sequencer::SequenceWithWord.new("ffee","coffee")
+        ]
+      end
     end
     context "when the line is 3 characters long or less" do
       let(:line) { "dog" }
@@ -65,14 +73,20 @@ describe Sequencer do
     end
   end
 
-  describe "#get_sequences_and_words" do
-    subject { @sequencer.get_sequences_and_words(sequence_hash) }
-    let(:sequence_hash) { {"rows" => "arrows", "carr" => "carrots", "rrot" => "carrots"} }
-    it "returns sequences as the first element, sorted" do
-      expect(subject[0]).to match_array ["carr", "rows", "rrot"]
-    end
-    it "returns words as the second element, in corresponding order to the sequences" do
-      expect(subject[1]).to match_array ["carrots", "arrows", "carrots"]
+  describe "#remove_sequences_with_multiple_occurrences" do
+    subject { @sequencer.remove_sequences_with_multiple_occurrences(sequences_with_words) }
+    let(:sequences_with_words) {
+      [
+        Sequencer::SequenceWithWord.new("coff", "coffee"),
+        Sequencer::SequenceWithWord.new("offe", "coffee"),
+        Sequencer::SequenceWithWord.new("ffee", "coffee"),
+        Sequencer::SequenceWithWord.new("coff", "coffer"),
+        Sequencer::SequenceWithWord.new("offe", "coffer"),
+        Sequencer::SequenceWithWord.new("ffer", "coffer")
+      ]
+    }
+    it "returns the array without sequences that occurred more than once" do
+      expect(subject).to eq [Sequencer::SequenceWithWord.new("ffee", "coffee"), Sequencer::SequenceWithWord.new("ffer", "coffer")]
     end
   end
 
