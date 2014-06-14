@@ -1,5 +1,7 @@
 class Sequencer
 
+  SequenceWithWord = Struct.new :sequence, :word
+
   def initialize(dictionary_filename, sequence_filename, words_filename)
     @dictionary_filename = dictionary_filename
     @sequence_filename = sequence_filename
@@ -7,42 +9,40 @@ class Sequencer
   end
 
   def process_four_letter_sequences
-    sequence_hash = parse_dictionary_file(@dictionary_filename, 4)
-    sequences, words = get_sequences_and_words(sequence_hash)
+    sequences_with_words = parse_dictionary_file(@dictionary_filename, 4)
+    sequences_with_words = remove_sequences_with_multiple_occurrences(sequences_with_words)
+    sequences_with_words.sort_by!(&:sequence)
+    sequences = sequences_with_words.map(&:sequence)
+    words = sequences_with_words.map(&:word)
     write_array_to_file(sequences, @sequence_filename)
     write_array_to_file(words, @words_filename)
   end
 
   def parse_dictionary_file(dictionary_filename, sequence_length)
-    sequence_hash = {}
-    dupes = []
+    sequences_with_words = []
     File.open(dictionary_filename) do |file|
       file.each_line do |line|
         line = line.chomp
-        sequences = parse_line(line, sequence_length)
-        sequences.each do |sequence|
-          dupes << sequence if sequence_hash.has_key?(sequence)
-          sequence_hash[sequence] = line
-        end
+        sequences_with_words += parse_line(line, sequence_length)
       end
     end
-    dupes.each { |dupe| sequence_hash.delete(dupe) }
-    sequence_hash
+    sequences_with_words
   end
 
   def parse_line(line, sequence_length)
     num_sequences = line.length - sequence_length
     (0..num_sequences).map do |index|
-      line[index, sequence_length]
+      SequenceWithWord.new line[index, sequence_length], line
     end
   end
 
-  def get_sequences_and_words(sequence_hash)
-    sequences = sequence_hash.keys.sort
-    words = sequences.map do |sequence|
-      sequence_hash[sequence]
+  def remove_sequences_with_multiple_occurrences(sequences_with_words)
+    occurrences = sequences_with_words.each_with_object(Hash.new 0) do |sequence_with_word, counts|
+      counts[sequence_with_word.sequence] += 1
     end
-    [sequences, words]
+    sequences_with_words.delete_if do |sequence_with_word|
+      occurrences[sequence_with_word.sequence] > 1
+    end
   end
 
   def write_array_to_file(array_object, filename)
@@ -50,6 +50,5 @@ class Sequencer
       file.puts(array_object)
     end
   end
-
 
 end
