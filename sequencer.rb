@@ -7,11 +7,48 @@ class Sequencer
   end
 
   def process_four_letter_sequences
-    File.open(@sequence_filename, 'w') do |file|
-      file.write('hello')
+    sequences, words = get_sequences(@dictionary_filename, 4)
+    write_array_to_file(sequences, @sequence_filename)
+    write_array_to_file(words, @words_filename)
+  end
+
+  def get_sequences(dictionary_filename, sequence_length)
+    sequence_hash = parse_dictionary_file(dictionary_filename, sequence_length)
+    sequences = sequence_hash.keys
+    words = sequence_hash.values
+    [sequences, words]
+  end
+
+  def parse_dictionary_file(dictionary_filename, sequence_length)
+    sequence_hash = {}
+    dupes = []
+    File.open(dictionary_filename) do |file|
+      file.each_line do |line|
+        line = line.chomp
+        sequences = parse_line(line, sequence_length)
+        raise "Two identical sequences in the same line!" if sequences.size != sequences.uniq.size
+        sequences.each do |sequence|
+          dupes << sequence if sequence_hash.has_key?(sequence)
+          sequence_hash[sequence] = line
+        end
+      end
     end
-    File.open(@words_filename, 'w') do |file|
-      file.write('hello')
+    dupes.each { |dupe| sequence_hash.delete(dupe) }
+    sequence_hash
+  end
+
+  def parse_line(line, sequence_length)
+    num_sequences = line.length - sequence_length
+    (0..num_sequences).map do |index|
+      line[index, sequence_length]
     end
   end
+
+  def write_array_to_file(array_object, filename)
+    File.open(filename, 'w') do |file|
+      file.puts(array_object)
+    end
+  end
+
+
 end
